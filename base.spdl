@@ -1,0 +1,43 @@
+const pk: Function;
+secret sk: Function;
+inversekeys (pk,sk);
+
+hashfunction hash;
+usertype UID, Timestamp, Amount;
+const a: Amount;
+
+macro Sm = {hash(C, IDm, a, r)}sk(M);
+macro Sc = {hash(B, IDc, IDm, a, r)}sk(C);
+
+protocol BaseCaseProtocol(M, C, B)
+{
+	role M
+	{
+		fresh r: Nonce;
+		fresh IDm: UID;
+
+		send_1 (M, C, IDm, a, r, Sm);
+
+		claim (M, Nisynch);
+	}
+
+	role C
+	{
+		fresh IDc: UID;
+		var r: Nonce;
+		var IDm: UID;
+
+		recv_1 (M, C, IDm, a, r, Sm);
+
+		send_2 (C, B, IDc, IDm, a, r, Sm, Sc);
+		claim (C, Nisynch);
+	}
+
+	role B
+	{
+		var IDm, IDc: UID;
+		var r: Nonce;
+
+		recv_2 (C, B, IDc, IDm, a, r, Sm, Sc);
+	}
+}
