@@ -7,7 +7,8 @@ usertype UID, Timestamp, Amount;
 const a: Amount;
 
 macro Sm = {hash(C, IDm, a, r)}sk(M);
-macro Sc = {hash(B, IDc, IDm, a, r)}sk(C);
+macro Sc = {hash(B, IDc, IDm, a, r, Sm)}sk(C);
+//Have to include Sm in Sc. Why? Important for the protocol?
 
 protocol BaseCaseProtocol(M, C, B)
 {
@@ -39,5 +40,7 @@ protocol BaseCaseProtocol(M, C, B)
 		var r: Nonce;
 
 		recv_2 (C, B, IDc, IDm, a, r, Sm, Sc);
+
+		claim (B, Nisynch);
 	}
 }
