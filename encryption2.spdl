@@ -1,0 +1,121 @@
+const pk: Function;
+secret sk: Function;
+inversekeys (pk,sk);
+secret k: Function;
+
+hashfunction hash, MAC, KDF;
+usertype UID, Timestamp, Amount;
+
+macro Kcm = KDF(k(M, C), Nm, Nc);
+macro IDt = hash(a, r, IDc, IDm);
+macro Sm = {hash(C, IDm, a, r)}sk(M);
+macro Sc = {hash(B, IDc, IDm, a, r, Sm)}sk(C);
+macro Sb = {hash(M, C, IDt, a, r, t)}sk(B);
+
+protocol EncryptionProtocol2(M, C, B)
+{
+	role M
+	{
+		fresh a: Amount;
+		fresh Nm, r: Nonce;
+		fresh IDm: UID;
+		var Nc: Nonce;
+		var IDc, IDm: UID;
+		var t: Timestamp;
+
+		/*
+		* Authenticated key exchange with the customer
+		*/ 
+
+		send_1 (M, C, Nm, MAC(k(M, C), M, C, Nm));
+		recv_2 (C, M, Nc, MAC(k(M, C), M, C, Nm, Nc));
+
+		/*
+		* Send encrypted transaction request to customer
+		*/
+		send_3 (M, C, { IDm, a, r, Sm }Kcm );
+
+		/*
+		* Receive encrypted payment confirmation from bank
+		*/
+		recv_5 (B,M, { IDt, a, r, t, Sb }k(M,B) );
+
+		claim (M, Secret, IDm);
+		claim (M, Secret, a);
+		claim (M, Secret, r);
+		claim (M, Secret, Kcm);
+		claim (M, Alive);
+		claim (M, Nisynch);
+		claim (M, Niagree);
+	}
+
+	role C
+	{
+		fresh Nc: Nonce;
+		fresh IDc: UID;
+		var Nm, r: Nonce;
+		var IDm: UID;
+		var t: Timestamp;
+		var a: Amount;
+
+		/*
+		* Authenticated key exchange with the merchant
+		*/ 
+
+		recv_1 (M, C, Nm, MAC(k(M, C), M, C, Nm));
+		send_2 (C, M, Nc, MAC(k(M, C), M, C, Nm, Nc));
+
+		/*
+		* Receive encrypted transaction request from merchant
+		*/
+		recv_3 (M, C, { IDm, a, r, Sm }Kcm );
+
+		/*
+		* Send encrypted transaction confirmation to bank
+		*/
+		send_4 (C, B, { IDc, IDm, a, r, Sm, Sc }k(C,B) );
+
+		/*
+		* Claim non-injective synch and agreement before receiving the last message to prevent Scyther from flagging redirection of send_3 to C as an attack
+		*/
+		claim (C, Nisynch);
+		claim (C, Niagree);
+
+		/*
+		* Receive encrypted payment confirmation from bank
+		*/
+		recv_6 (B, C, { IDt, a, r, t, Sb }k(C,B) );
+
+		claim (C, Secret, Kcm);
+		claim (C, Secret, IDc);
+		claim (C, Secret, Sc);
+		claim (C, Alive);
+	}
+
+	role B
+	{
+		var IDm, IDc: UID;
+		var r: Nonce;
+		var a: Amount;
+
+		/*
+		* Receive encrypted transaction confirmation/payment request from customer
+		*/
+		recv_4 (C, B, { IDc, IDm, a, r, Sm, Sc }k(C,B) );
+
+		fresh t: Timestamp;
+
+		/*
+		* Send encrypted payment confirmations to merchant and customer
+		*/
+		send_5 (B, M, { IDt, a, r, t, Sb }k(M, B) );
+		send_6 (B, C, { IDt, a, r, t, Sb }k(C, B) );
+
+		claim (B, Secret, IDt);
+		claim (B, Secret, t);
+		claim (B, Secret, Sb);
+		claim (B, Alive);
+		claim (B, Nisynch);
+		claim (B, Niagree);
+	}
+}
