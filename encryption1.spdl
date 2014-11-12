@@ -1,13 +1,13 @@
 const pk: Function;
 secret sk: Function;
 inversekeys (pk,sk);
+secret k: Function;
 
 hashfunction hash;
 usertype UID, Timestamp, Amount;
 const a: Amount;
 
 macro IDt = hash(a, r, IDc, IDm);
-
 macro Sm = {hash(C, IDm, a, r)}sk(M);
 macro Sc = {hash(B, IDc, IDm, a, r, Sm)}sk(C);
 macro Sb = {hash(M, C, IDt, a, r, t)}sk(B);
@@ -22,14 +22,14 @@ protocol BaseCaseProtocol(M, C, B)
 		var t: Timestamp;
 
 		/*
-		* Send transaction request to customer
+		* Send unencrypted transaction request to customer
 		*/
 		send_1 (M, C, IDm, a, r, Sm);
 
 		/*
-		* Receive payment confirmation from bank
+		* Receive encrypted payment confirmation from bank
 		*/
-		recv_3 (B, M, IDt, a, r, t, Sb);
+		recv_3 (B,M, { IDt, a, r, t, Sb }k(M,B) );
 
 		claim (M, Alive);
 		claim (M, Nisynch);
@@ -44,14 +44,14 @@ protocol BaseCaseProtocol(M, C, B)
 		var t: Timestamp;
 
 		/*
-		* Receive transaction request from merchant
+		* Receive unencrypted transaction request from merchant
 		*/
 		recv_1 (M, C, IDm, a, r, Sm);
 
 		/*
-		* Send transaction confirmation to bank
+		* Send encrypted transaction confirmation to bank
 		*/
-		send_2 (C, B, IDc, IDm, a, r, Sm, Sc);
+		send_2 (C, B, { IDc, IDm, a, r, Sm, Sc }k(C,B) );
 
 		/*
 		* Claim non-injective synch and agreement before receiving the last message to prevent Scyther from flagging redirection of send_3 to C as an attack
@@ -60,10 +60,12 @@ protocol BaseCaseProtocol(M, C, B)
 		claim (C, Niagree);
 
 		/*
-		* Receive payment confirmation from bank
+		* Receive encrypted payment confirmation from bank
 		*/
-		recv_4 (B, C, IDt, a, r, t, Sb);
+		recv_4 (B, C, { IDt, a, r, t, Sb }k(C,B) );
 
+		claim (C, Secret, IDc);
+		claim (C, Secret, Sc);
 		claim (C, Alive);
 	}
 
@@ -73,18 +75,21 @@ protocol BaseCaseProtocol(M, C, B)
 		var r: Nonce;
 
 		/*
-		* Receive transaction confirmation/payment request from customer
+		* Receive encrypted transaction confirmation/payment request from customer
 		*/
-		recv_2 (C, B, IDc, IDm, a, r, Sm, Sc);
+		recv_2 (C, B, { IDc, IDm, a, r, Sm, Sc }k(C,B) );
 
 		fresh t: Timestamp;
 
 		/*
-		* Send payment confirmations to merchant and customer
+		* Send encrypted payment confirmations to merchant and customer
 		*/
-		send_3 (B, M, IDt, a, r, t, Sb);
-		send_4 (B, C, IDt, a, r, t, Sb);
+		send_3 (B, M, { IDt, a, r, t, Sb }k(M, B) );
+		send_4 (B, C, { IDt, a, r, t, Sb }k(C, B) );
 
+		claim (B, Secret, IDt);
+		claim (B, Secret, t);
+		claim (B, Secret, Sb);
 		claim (B, Alive);
 		claim (B, Nisynch);
 		claim (B, Niagree);
