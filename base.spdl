@@ -9,8 +9,7 @@ const a: Amount;
 macro IDt = hash(a, r, IDc, IDm);
 macro Sm = {hash(C, IDm, a, r)}sk(M);
 macro Sc = {hash(B, IDc, IDm, a, r, Sm)}sk(C);
-//Have to include Sm in Sc. Why? Important for the protocol?
-macro Sb = {hash(M, IDt, a, r, t)}sk(B);
+macro Sb = {hash(M, C, IDt, a, r, t)}sk(B);
 
 protocol BaseCaseProtocol(M, C, B)
 {
@@ -21,11 +20,19 @@ protocol BaseCaseProtocol(M, C, B)
 		var IDc, IDm: UID;
 		var t: Timestamp;
 
+		/*
+		* Send transaction request to customer
+		*/
 		send_1 (M, C, IDm, a, r, Sm);
 
+		/*
+		* Receive payment confirmation from bank
+		*/
 		recv_3 (B,M, IDt, a, r, t, Sb);
 
+		claim (M, Alive);
 		claim (M, Nisynch);
+		claim (M, Niagree);
 	}
 
 	role C
@@ -33,11 +40,30 @@ protocol BaseCaseProtocol(M, C, B)
 		fresh IDc: UID;
 		var r: Nonce;
 		var IDm: UID;
+		var t: Timestamp;
 
+		/*
+		* Receive transaction request from merchant
+		*/
 		recv_1 (M, C, IDm, a, r, Sm);
 
+		/*
+		* Send transaction confirmation to bank
+		*/
 		send_2 (C, B, IDc, IDm, a, r, Sm, Sc);
+
+		/*
+		* Claim non-injective synch and agreement before receiving the last message to prevent Scyther from flagging redirection of send_3 to C as an attack
+		*/
 		claim (C, Nisynch);
+		claim (C, Niagree);
+
+		/*
+		* Receive payment confirmation from bank
+		*/
+		recv_4 (B, C, IDt, a, r, t, Sb);
+
+		claim (C, Alive);
 	}
 
 	role B
@@ -45,11 +71,21 @@ protocol BaseCaseProtocol(M, C, B)
 		var IDm, IDc: UID;
 		var r: Nonce;
 
+		/*
+		* Receive transaction confirmation/payment request from customer
+		*/
 		recv_2 (C, B, IDc, IDm, a, r, Sm, Sc);
 
 		fresh t: Timestamp;
-		send_3 (B,M, IDt, a, r, t, Sb);
 
+		/*
+		* Send payment confirmations to merchant and customer
+		*/
+		send_3 (B, M, IDt, a, r, t, Sb);
+		send_4 (B, C, IDt, a, r, t, Sb);
+
+		claim (B, Alive);
 		claim (B, Nisynch);
+		claim (B, Niagree);
 	}
 }
