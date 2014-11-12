@@ -12,7 +12,7 @@ macro Sm = {hash(C, IDm, a, r)}sk(M);
 macro Sc = {hash(B, IDc, IDm, a, r, Sm)}sk(C);
 macro Sb = {hash(M, C, IDt, a, r, t)}sk(B);
 
-protocol BaseCaseProtocol(M, C, B)
+protocol EncryptionProtocol1(M, C, B)
 {
 	role M
 	{
