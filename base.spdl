@@ -6,9 +6,11 @@ hashfunction hash;
 usertype UID, Timestamp, Amount;
 const a: Amount;
 
+macro IDt = hash(a, r, IDc, IDm);
 macro Sm = {hash(C, IDm, a, r)}sk(M);
 macro Sc = {hash(B, IDc, IDm, a, r, Sm)}sk(C);
 //Have to include Sm in Sc. Why? Important for the protocol?
+macro Sb = {hash(M, IDt, a, r, t)}sk(B);
 
 protocol BaseCaseProtocol(M, C, B)
 {
@@ -16,8 +18,12 @@ protocol BaseCaseProtocol(M, C, B)
 	{
 		fresh r: Nonce;
 		fresh IDm: UID;
+		var IDc, IDm: UID;
+		var t: Timestamp;
 
 		send_1 (M, C, IDm, a, r, Sm);
+
+		recv_3 (B,M, IDt, a, r, t, Sb);
 
 		claim (M, Nisynch);
 	}
@@ -40,6 +46,9 @@ protocol BaseCaseProtocol(M, C, B)
 		var r: Nonce;
 
 		recv_2 (C, B, IDc, IDm, a, r, Sm, Sc);
+
+		fresh t: Timestamp;
+		send_3 (B,M, IDt, a, r, t, Sb);
 
 		claim (B, Nisynch);
 	}
