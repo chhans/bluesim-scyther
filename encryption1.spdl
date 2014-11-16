@@ -7,6 +7,8 @@ hashfunction hash;
 usertype UID, Timestamp, Amount;
 const a: Amount;
 
+const IDm: UID;
+
 macro IDt = hash(a, r, IDc, IDm);
 macro Sm = {hash(C, IDm, a, r)}sk(M);
 macro Sc = {hash(B, IDc, IDm, a, r, Sm)}sk(C);
@@ -17,8 +19,7 @@ protocol EncryptionProtocol1(M, C, B)
 	role M
 	{
 		fresh r: Nonce;
-		fresh IDm: UID;
-		var IDc, IDm: UID;
+		var IDc: UID;
 		var t: Timestamp;
 
 		/*
@@ -40,7 +41,6 @@ protocol EncryptionProtocol1(M, C, B)
 	{
 		fresh IDc: UID;
 		var r: Nonce;
-		var IDm: UID;
 		var t: Timestamp;
 
 		/*
@@ -71,7 +71,7 @@ protocol EncryptionProtocol1(M, C, B)
 
 	role B
 	{
-		var IDm, IDc: UID;
+		var IDc: UID;
 		var r: Nonce;
 
 		/*

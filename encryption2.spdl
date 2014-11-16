@@ -20,7 +20,7 @@ protocol EncryptionProtocol2(M, C, B)
 		fresh Nm, r: Nonce;
 		fresh IDm: UID;
 		var Nc: Nonce;
-		var IDc, IDm: UID;
+		var IDc: UID;
 		var t: Timestamp;
 
 		/*
@@ -53,8 +53,8 @@ protocol EncryptionProtocol2(M, C, B)
 	{
 		fresh Nc: Nonce;
 		fresh IDc: UID;
-		var Nm, r: Nonce;
 		var IDm: UID;
+		var Nm, r: Nonce;
 		var t: Timestamp;
 		var a: Amount;
 
@@ -94,7 +94,7 @@ protocol EncryptionProtocol2(M, C, B)
 
 	role B
 	{
-		var IDm, IDc: UID;
+		var IDc, IDm: UID;
 		var r: Nonce;
 		var a: Amount;
 
